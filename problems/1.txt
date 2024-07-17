@@ -1,0 +1,2 @@
+It can transmit images normally!
+However,When I transfer files with a size of 1G named "__down", the program crashed!
