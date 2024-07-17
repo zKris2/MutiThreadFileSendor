@@ -16,7 +16,7 @@ public:
     QString getTcpError();
 
     QTcpSocket* onNewConnection();
-    quint32 recvData(QTcpSocket* client,QString directory);
+    quint64 recvData(QTcpSocket* client,QString directory);
 
 public:
     QTcpServer* _tcp_server;
@@ -24,8 +24,8 @@ public:
 
     QString _filename;
     QByteArray _recv_data;
-    quint32 _filesize;
-    quint32 _recved_filesize;
+    quint64 _filesize;
+    quint64 _recved_filesize;
 };
 
 #endif // SERVER_H

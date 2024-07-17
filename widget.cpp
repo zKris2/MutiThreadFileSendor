@@ -43,9 +43,9 @@ void Widget::on_pushButton_send_file_clicked()
         return;
     }
 
+    //connect server
     QString address = ui->lineEdit_server_ip->text();
     quint16 port = ui->lineEdit_server_port->text().toUShort();
-
     if(!_client->setAddressPort(address,port)){
         QMessageBox::information(this, "Information", _client->getTcpError());
         return;
@@ -64,13 +64,13 @@ void Widget::on_pushButton_send_file_clicked()
     // 读取文件内容
     QFileInfo fileinfo(filename);
     int filesize = fileinfo.size();
+    qDebug()<<"发送端文件大小:"<<filesize;
 
     // 发送文件名
     QString send_filename = Util::getFilename(filename);
     qDebug()<<"发送端解析文件名称:"<<send_filename;
     send_filename.append('\0');
     _client->sendBytes(send_filename.toUtf8());
-
     _client->sendBytes((char*)&filesize, 4); //用4个字节表示文件大小
 
     int curSize = 0;
@@ -82,6 +82,7 @@ void Widget::on_pushButton_send_file_clicked()
         ui->progressBar_send->setValue(progressValue);
         if(progressValue==100){
             ui->lineEdit_send_status->setText("发送文件["+filename+"]成功!");
+            _client->_tcp_client->disconnectFromHost();
         }
     }
 }
@@ -121,9 +122,14 @@ void Widget::recvFile(QTcpSocket* client){
     ui->progressBar_recv->setValue(0);
     ui->lineEdit_recv_status->setText("");
 
-    int receivedSize = _server->recvData(client,ui->lineEdit_save_dir->text());
+    quint64 receivedSize = _server->recvData(client,ui->lineEdit_save_dir->text());
+    if(_server->_filesize==0){
+        QMessageBox::warning(this,"警告","文件大小为0,传输出错");
+        return;
+    }
 
-    int progressValue = (receivedSize * 100) / _server->_filesize;
+    quint64 progressValue = (receivedSize * 100) / _server->_filesize;
+   // qDebug()<<progressValue;
     ui->progressBar_recv->setValue(progressValue);
 
     if(progressValue==100){
@@ -133,8 +139,8 @@ void Widget::recvFile(QTcpSocket* client){
         _server-> _recved_filesize=0;
         _server->_recv_data=nullptr;
     }
-}
 
+}
 
 
 void Widget::on_pushButton_save_dir_clicked()

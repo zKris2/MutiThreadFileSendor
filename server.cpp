@@ -42,15 +42,15 @@ QString Server::getTcpError(){
     return _tcp_server->errorString();
 }
 
-quint32 Server::recvData(QTcpSocket* client,QString directory){
+quint64 Server::recvData(QTcpSocket* client,QString directory){
     QByteArray buffer = client->readAll();
-
     // 如果我们还没有接收到文件大小，先读取MIME类型和文件大小
     if (_filesize == 0) {
         int nullPos = buffer.indexOf('\0');
         if (nullPos != -1) {
             // 保存FILENAME
             _filename = buffer.left(nullPos);
+            //qDebug()<<"接收端文件名称:"<<_filename;
             buffer.remove(0, nullPos + 1);
             // 现在buffer应该包含文件大小信息
             if (buffer.size() >= 4) {
@@ -58,6 +58,7 @@ quint32 Server::recvData(QTcpSocket* client,QString directory){
                 memcpy(&_filesize, buffer.constData(), 4);
                 // 移除已读取的文件大小信息
                 buffer.remove(0, 4);
+                //qDebug()<<"接收端文件大小:"<<_filesize;
             }
         }
     }
@@ -67,6 +68,7 @@ quint32 Server::recvData(QTcpSocket* client,QString directory){
     if (_recved_filesize >= _filesize) {
         _filename = directory + _filename;
         qDebug()<<"保存文件目录:"<<_filename;
+        qDebug()<<"文件大小:"<<_recv_data.size();
         QPair<bool,QString> result = Util::saveByteArray2File(_recv_data,_filename);
         if(!result.first){
             qDebug()<<"save file failed: "<<result.second;
